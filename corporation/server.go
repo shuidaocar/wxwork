@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/beevik/etree"
+
 	eventtype "github.com/fastwego/wxwork/corporation/type/type_event"
 	messagetype "github.com/fastwego/wxwork/corporation/type/type_message"
 
@@ -400,7 +402,7 @@ func parseEvent(body []byte) (m interface{}, err error) {
 	}
 
 	doc := etree.NewDocument()
-	err = doc.ReadFromString(str)
+	err = doc.ReadFromBytes(body)
 	_, v := ParseXml(doc.Root())
 	return v, nil
 }
@@ -465,7 +467,6 @@ func (s *Server) encryptReplyMessage(rawXmlMsg []byte) (replyEncryptMessage mess
 		Nonce:        nonce,
 	}, nil
 }
-
 
 func ParseXml(doc *etree.Element) (string, interface{}) {
 	if len(doc.ChildElements()) == 0 {
