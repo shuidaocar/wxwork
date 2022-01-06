@@ -399,7 +399,10 @@ func parseEvent(body []byte) (m interface{}, err error) {
 		return msg, nil
 	}
 
-	return
+	doc := etree.NewDocument()
+	err = doc.ReadFromString(str)
+	_, v := ParseXml(doc.Root())
+	return v, nil
 }
 
 // Response 响应微信消息
@@ -461,4 +464,20 @@ func (s *Server) encryptReplyMessage(rawXmlMsg []byte) (replyEncryptMessage mess
 		TimeStamp:    timestamp,
 		Nonce:        nonce,
 	}, nil
+}
+
+
+func ParseXml(doc *etree.Element) (string, interface{}) {
+	if len(doc.ChildElements()) == 0 {
+		return doc.Tag, doc.Text()
+
+	} else {
+		ret := make(map[string]interface{})
+		for _, vv := range doc.ChildElements() {
+			k, v := ParseXml(vv)
+			ret[k] = v
+		}
+
+		return doc.Tag, ret
+	}
 }
