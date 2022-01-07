@@ -88,6 +88,7 @@ func (client *Client) httpDo(req *http.Request) (resp []byte, err error) {
 	defer response.Body.Close()
 
 	resp, err = responseFilter(response)
+	client.Ctx.Corporation.Logger.Printf("%s %v %v\n", "httpDo resp", resp, err)
 
 	// 发现 access_token 过期
 	if err == ErrorAccessToken {
@@ -169,12 +170,12 @@ func (client *Client) applyAccessToken(oldUrl string) (newUrl string, err error)
 func responseFilter(response *http.Response) (resp []byte, err error) {
 	if response.StatusCode != http.StatusOK {
 		err = fmt.Errorf("Status %s", response.Status)
-		return
+		return nil, err
 	}
 
 	resp, err = ioutil.ReadAll(response.Body)
 	if err != nil {
-		return
+		return resp, err
 	}
 
 	errorResponse := struct {
@@ -183,23 +184,23 @@ func responseFilter(response *http.Response) (resp []byte, err error) {
 	}{}
 	err = json.Unmarshal(resp, &errorResponse)
 	if err != nil {
-		return
+		return resp, err
 	}
 
 	if errorResponse.Errcode == 40014 {
 		err = ErrorAccessToken
-		return
+		return resp, err
 	}
 
 	//  -1	系统繁忙，此时请开发者稍候再试
 	if errorResponse.Errcode == -1 {
 		err = ErrorSystemBusy
-		return
+		return resp, err
 	}
 
 	if errorResponse.Errcode != 0 {
 		err = errors.New(string(resp))
-		return
+		return resp, err
 	}
 	return
 }
@@ -229,7 +230,7 @@ func GetAccessToken(app *App) (accessToken string, err error) {
 
 	accessToken, expiresIn, err := refreshAccessTokenFromWXServer(app.Corporation.Config.Corpid, app.Config.Secret)
 	if err != nil {
-		return
+		return "", err
 	}
 
 	d := time.Duration(expiresIn) * time.Second
