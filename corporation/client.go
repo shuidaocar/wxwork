@@ -88,7 +88,7 @@ func (client *Client) httpDo(req *http.Request) (resp []byte, err error) {
 	defer response.Body.Close()
 
 	resp, err = responseFilter(response)
-	client.Ctx.Corporation.Logger.Printf("%s %v %v\n", "httpDo resp", resp, err)
+	client.Ctx.Corporation.Logger.Printf("%s %s %v\n", "httpDo resp", string(resp), err)
 
 	// 发现 access_token 过期
 	if err == ErrorAccessToken {
