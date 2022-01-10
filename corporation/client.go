@@ -207,6 +207,8 @@ func responseFilter(response *http.Response) (resp []byte, err error) {
 
 // 防止多个 goroutine 并发刷新冲突
 var refreshAccessTokenLock sync.Mutex
+var refreshJsTicketLock sync.Mutex
+var refreshAgentJsTicketLock sync.Mutex
 
 /*
 从 公众号实例 的 AccessToken 管理器 获取 access_token
@@ -313,13 +315,14 @@ func refreshAccessTokenFromWXServer(appid string, secret string) (accessToken st
 */
 func GetJsApiTicket(app *App) (ticket string, err error) {
 	cacheKey := app.Config.AgentId + app.Config.Secret + "js_ticket" // 企业微信-系统应用没有 agentid ，所以需要secret 辅助
+	app.Corporation.Logger.Printf("%s %s\n", "cache key", cacheKey)
 	ticket, err = app.AccessToken.Cache.Fetch(cacheKey)
 	if ticket != "" {
 		return
 	}
 
-	refreshAccessTokenLock.Lock()
-	defer refreshAccessTokenLock.Unlock()
+	refreshJsTicketLock.Lock()
+	defer refreshJsTicketLock.Unlock()
 
 	accessToken, err := GetAccessToken(app)
 	if err != nil {
@@ -400,8 +403,8 @@ func GetAgentJsApiTicket(app *App) (ticket string, err error) {
 		return
 	}
 
-	refreshAccessTokenLock.Lock()
-	defer refreshAccessTokenLock.Unlock()
+	refreshAgentJsTicketLock.Lock()
+	defer refreshAgentJsTicketLock.Unlock()
 
 	accessToken, err := GetAccessToken(app)
 	if err != nil {
