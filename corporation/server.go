@@ -96,7 +96,7 @@ POST /api/callback?msg_signature=ASDFQWEXZCVAQFASDFASDFSS
    <Encrypt><![CDATA[msg_encrypt]]></Encrypt>
 </xml>
 */
-func (s *Server) ParseXML(request *http.Request) (m interface{}, err error) {
+func (s *Server) ParseXML(request *http.Request) (m map[string]interface{}, err error) {
 	var body []byte
 	body, err = ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -144,7 +144,15 @@ func (s *Server) ParseXML(request *http.Request) (m interface{}, err error) {
 		s.Ctx.Corporation.Logger.Println("AESDecryptMsg ", string(body))
 	}
 
-	return parseMsg(body)
+	return parseMsgV2(body)
+}
+
+func parseMsgV2(body []byte) (map[string]interface{}, error) {
+	doc := etree.NewDocument()
+	err := doc.ReadFromBytes(body)
+	_, v := ParseXml(doc.Root())
+
+	return v.(map[string]interface{}), err
 }
 
 // 解析消息/事件
