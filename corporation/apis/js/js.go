@@ -17,6 +17,7 @@ type AgentConfig struct {
 }
 
 func GetConfig(ctx *corporation.App, url string) (config map[string]string, err error) {
+	config = make(map[string]string)
 	ticketStr, err := corporation.GetJsApiTicket(ctx)
 	if err != nil {
 		return
@@ -36,6 +37,7 @@ func GetConfig(ctx *corporation.App, url string) (config map[string]string, err 
 }
 
 func GetAgentConfig(ctx *corporation.App, url string) (config map[string]string, err error) {
+	config = make(map[string]string)
 	ticketStr, err := corporation.GetAgentJsApiTicket(ctx)
 	if err != nil {
 		return
