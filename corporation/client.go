@@ -434,6 +434,7 @@ See: https://developers.weixin.qq.com/doc/corporation/Basic_Information/Get_acce
 func refreshAgentJsApiTicketFromWXServer(accessToken string) (jsApiTicket string, expiresIn int, err error) {
 	params := url.Values{}
 	params.Add("access_token", accessToken)
+	params.Add("type", "agent_config")
 	url := WXServerUrl + "/cgi-bin/ticket/get?" + params.Encode()
 
 	response, err := http.Get(url)
