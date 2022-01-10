@@ -6,15 +6,6 @@ import (
 	"github.com/fastwego/wxwork/util"
 )
 
-// Config 返回给用户jssdk配置信息
-type Config struct {
-	AppID     string `json:"app_id"`
-	Timestamp string `json:"timestamp"`
-	NonceStr  string `json:"nonce_str"`
-	Signature string `json:"signature"`
-	Url       string `json:"url"`
-}
-
 // AgentConfig 返回给用户jssdk配置信息
 type AgentConfig struct {
 	CorpID    string `json:"corp_id"`
@@ -25,8 +16,7 @@ type AgentConfig struct {
 	Url       string `json:"url"`
 }
 
-func GetConfig(ctx *corporation.App, url string) (config *Config, err error) {
-	config = new(Config)
+func GetConfig(ctx *corporation.App, url string) (config map[string]string, err error) {
 	ticketStr, err := corporation.GetJsApiTicket(ctx)
 	if err != nil {
 		return
@@ -37,15 +27,15 @@ func GetConfig(ctx *corporation.App, url string) (config *Config, err error) {
 	str := fmt.Sprintf("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticketStr, nonceStr, timestamp, url)
 	sigStr := util.Signature(str)
 
-	config.AppID = ctx.Corporation.Config.Corpid
-	config.NonceStr = nonceStr
-	config.Timestamp = timestamp
-	config.Signature = sigStr
+	config["appId"] = ctx.Corporation.Config.Corpid
+	config["nonceStr"] = nonceStr
+	config["timestamp"] = timestamp
+	config["signature"] = sigStr
+	config["url"] = url
 	return
 }
 
-func GetAgentConfig(ctx *corporation.App, url string) (config *AgentConfig, err error) {
-	config = new(AgentConfig)
+func GetAgentConfig(ctx *corporation.App, url string) (config map[string]string, err error) {
 	ticketStr, err := corporation.GetAgentJsApiTicket(ctx)
 	if err != nil {
 		return
@@ -56,10 +46,11 @@ func GetAgentConfig(ctx *corporation.App, url string) (config *AgentConfig, err 
 	str := fmt.Sprintf("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticketStr, nonceStr, timestamp, url)
 	sigStr := util.Signature(str)
 
-	config.CorpID = ctx.Corporation.Config.Corpid
-	config.AgentID = ctx.Config.AgentId
-	config.NonceStr = nonceStr
-	config.Timestamp = timestamp
-	config.Signature = sigStr
+	config["corpId"] = ctx.Corporation.Config.Corpid
+	config["agentId"] = ctx.Config.AgentId
+	config["nonceStr"] = nonceStr
+	config["timestamp"] = timestamp
+	config["signature"] = sigStr
+	config["url"] = url
 	return
 }
