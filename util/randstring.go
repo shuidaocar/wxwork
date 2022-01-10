@@ -16,6 +16,7 @@ package util
 
 import (
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -35,4 +36,8 @@ func GetRandStringWithCharset(length int, charset string) string {
 // GetRandString 获取指定长度的随机字符串
 func GetRandString(length int) string {
 	return GetRandStringWithCharset(length, charset)
+}
+
+func GetCurrentTs() string {
+	return strconv.FormatInt(time.Now().Unix(), 10)
 }

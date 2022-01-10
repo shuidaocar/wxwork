@@ -305,3 +305,167 @@ func refreshAccessTokenFromWXServer(appid string, secret string) (accessToken st
 
 	return result.AccessToken, result.ExpiresIn, nil
 }
+
+/*
+从 js_api_ticket
+
+如果没有 js_api_ticket 或者 已过期，那么刷新
+*/
+func GetJsApiTicket(app *App) (ticket string, err error) {
+	cacheKey := app.Config.AgentId + app.Config.Secret + "js_ticket" // 企业微信-系统应用没有 agentid ，所以需要secret 辅助
+	ticket, err = app.AccessToken.Cache.Fetch(cacheKey)
+	if ticket != "" {
+		return
+	}
+
+	refreshAccessTokenLock.Lock()
+	defer refreshAccessTokenLock.Unlock()
+
+	accessToken, err := GetAccessToken(app)
+	if err != nil {
+		return "", err
+	}
+
+	ticket, expiresIn, err := refreshJsApiTicketFromWXServer(accessToken)
+	if err != nil {
+		return "", err
+	}
+
+	d := time.Duration(expiresIn) * time.Second
+	_ = app.AccessToken.Cache.Save(cacheKey, ticket, d)
+
+	if app.Corporation.Logger != nil {
+		app.Corporation.Logger.Printf("%s %s %d\n", "refreshJsApiTicketFromWXServer", ticket, expiresIn)
+	}
+
+	return
+}
+
+/*
+从微信服务器获取新的 Js Api Ticket
+
+See: https://developers.weixin.qq.com/doc/corporation/Basic_Information/Get_access_token.html
+*/
+func refreshJsApiTicketFromWXServer(accessToken string) (jsApiTicket string, expiresIn int, err error) {
+	params := url.Values{}
+	params.Add("access_token", accessToken)
+	url := WXServerUrl + "/cgi-bin/get_jsapi_ticket?" + params.Encode()
+
+	response, err := http.Get(url)
+	if err != nil {
+		return
+	}
+
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		err = fmt.Errorf("GET %s RETURN %s", url, response.Status)
+		return
+	}
+
+	resp, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+
+	var result = struct {
+		Ticket    string  `json:"ticket"`
+		ExpiresIn int     `json:"expires_in"`
+		Errcode   float64 `json:"errcode"`
+		Errmsg    string  `json:"errmsg"`
+	}{}
+
+	err = json.Unmarshal(resp, &result)
+	if err != nil {
+		err = fmt.Errorf("Unmarshal error %s", string(resp))
+		return
+	}
+
+	if result.Ticket == "" {
+		err = fmt.Errorf("%s", string(resp))
+		return
+	}
+
+	return result.Ticket, result.ExpiresIn, nil
+}
+
+/*
+从 agent_js_api_ticket
+
+如果没有 agent_js_api_ticket 或者 已过期，那么刷新
+*/
+func GetAgentJsApiTicket(app *App) (ticket string, err error) {
+	cacheKey := app.Config.AgentId + app.Config.Secret + "agent_js_ticket" // 企业微信-系统应用没有 agentid ，所以需要secret 辅助
+	ticket, err = app.AccessToken.Cache.Fetch(cacheKey)
+	if ticket != "" {
+		return
+	}
+
+	refreshAccessTokenLock.Lock()
+	defer refreshAccessTokenLock.Unlock()
+
+	accessToken, err := GetAccessToken(app)
+	if err != nil {
+		return "", err
+	}
+
+	ticket, expiresIn, err := refreshAgentJsApiTicketFromWXServer(accessToken)
+	if err != nil {
+		return "", err
+	}
+
+	d := time.Duration(expiresIn) * time.Second
+	_ = app.AccessToken.Cache.Save(cacheKey, ticket, d)
+
+	if app.Corporation.Logger != nil {
+		app.Corporation.Logger.Printf("%s %s %d\n", "refreshAgentJsApiTicketFromWXServer", ticket, expiresIn)
+	}
+
+	return
+}
+
+/*
+从微信服务器获取新的 Agent Js Api Ticket
+
+See: https://developers.weixin.qq.com/doc/corporation/Basic_Information/Get_access_token.html
+*/
+func refreshAgentJsApiTicketFromWXServer(accessToken string) (jsApiTicket string, expiresIn int, err error) {
+	params := url.Values{}
+	params.Add("access_token", accessToken)
+	url := WXServerUrl + "/cgi-bin/ticket/get?" + params.Encode()
+
+	response, err := http.Get(url)
+	if err != nil {
+		return
+	}
+
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		err = fmt.Errorf("GET %s RETURN %s", url, response.Status)
+		return
+	}
+
+	resp, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+
+	var result = struct {
+		Ticket    string  `json:"ticket"`
+		ExpiresIn int     `json:"expires_in"`
+		Errcode   float64 `json:"errcode"`
+		Errmsg    string  `json:"errmsg"`
+	}{}
+
+	err = json.Unmarshal(resp, &result)
+	if err != nil {
+		err = fmt.Errorf("Unmarshal error %s", string(resp))
+		return
+	}
+
+	if result.Ticket == "" {
+		err = fmt.Errorf("%s", string(resp))
+		return
+	}
+
+	return result.Ticket, result.ExpiresIn, nil
+}
