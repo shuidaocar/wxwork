@@ -25,7 +25,7 @@ func GetConfig(ctx *corporation.App, url string) (config map[string]string, err 
 
 	nonceStr := util.GetRandString(16)
 	timestamp := util.GetCurrentTs()
-	str := fmt.Sprintf("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticketStr, nonceStr, timestamp, url)
+	str := fmt.Sprintf("jsapi_ticket=%s&noncestr=%s&timestamp=%s&url=%s", ticketStr, nonceStr, timestamp, url)
 	sigStr := util.Signature(str)
 
 	config["appId"] = ctx.Corporation.Config.Corpid
@@ -45,7 +45,7 @@ func GetAgentConfig(ctx *corporation.App, url string) (config map[string]string,
 
 	nonceStr := util.GetRandString(16)
 	timestamp := util.GetCurrentTs()
-	str := fmt.Sprintf("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticketStr, nonceStr, timestamp, url)
+	str := fmt.Sprintf("jsapi_ticket=%s&noncestr=%s&timestamp=%s&url=%s", ticketStr, nonceStr, timestamp, url)
 	sigStr := util.Signature(str)
 
 	config["corpId"] = ctx.Corporation.Config.Corpid
